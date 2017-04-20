@@ -113,3 +113,10 @@ h1 {
     animation:fade 3000ms infinite;
     -webkit-animation:fade 3000ms infinite;
 }
+h2{
+    text-align: center;
+}
+#map_view{
+    height: 50vh;
+    width: 100%;
+}

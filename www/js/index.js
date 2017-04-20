@@ -57,8 +57,8 @@
 import Vue from 'vue'
 import App from './components/App.vue'
 import Home from './components/Home.vue'
-// import SecretQuote from './components/SecretQuote.vue'
-// import Signup from './components/Signup.vue'
+import MapView from './components/MapView.vue'
+import Signup from './components/Signup.vue'
 import Login from './components/Login.vue'
 import VueRouter from 'vue-router'
 import VueResource from 'vue-resource'
@@ -78,10 +78,14 @@ router.map({
     '/login': {
         component: Login
     },
-    // '/signup': {
-    //     component: Signup
-    // }
+    '/signup': {
+        component: Signup
+    },
+    '/mapview': {
+        component: MapView
+    }
 });
+
 
 // Redirect to the home route if any routes are unmatched
 router.redirect({
@@ -90,3 +94,11 @@ router.redirect({
 
 // Start the app on the #app div
 router.start(App, '#app');
+
+var storage = window.localStorage;
+var token = storage.getItem('token');
+if(token != '')
+{
+    window.location.assign("/index.html#!/mapview");
+    console.log("Using token now: "+ token);
+}

@@ -70,15 +70,23 @@
 
 	var _Home2 = _interopRequireDefault(_Home);
 
-	var _Login = __webpack_require__(9);
+	var _MapView = __webpack_require__(9);
+
+	var _MapView2 = _interopRequireDefault(_MapView);
+
+	var _Signup = __webpack_require__(12);
+
+	var _Signup2 = _interopRequireDefault(_Signup);
+
+	var _Login = __webpack_require__(15);
 
 	var _Login2 = _interopRequireDefault(_Login);
 
-	var _vueRouter = __webpack_require__(12);
+	var _vueRouter = __webpack_require__(18);
 
 	var _vueRouter2 = _interopRequireDefault(_vueRouter);
 
-	var _vueResource = __webpack_require__(13);
+	var _vueResource = __webpack_require__(19);
 
 	var _vueResource2 = _interopRequireDefault(_vueResource);
 
@@ -141,9 +149,6 @@
 	// }
 
 	_vue2.default.use(_vueResource2.default);
-	// import SecretQuote from './components/SecretQuote.vue'
-	// import Signup from './components/Signup.vue'
-
 	_vue2.default.use(_vueRouter2.default);
 
 	var router = exports.router = new _vueRouter2.default();
@@ -158,6 +163,12 @@
 	    // },
 	    '/login': {
 	        component: _Login2.default
+	    },
+	    '/signup': {
+	        component: _Signup2.default
+	    },
+	    '/mapview': {
+	        component: _MapView2.default
 	    }
 	});
 
@@ -168,6 +179,13 @@
 
 	// Start the app on the #app div
 	router.start(_App2.default, '#app');
+
+	var storage = window.localStorage;
+	var token = storage.getItem('token');
+	if (token != '') {
+	    window.location.assign("/index.html#!/mapview");
+	    console.log("Using token now: " + token);
+	}
 
 /***/ }),
 /* 2 */
@@ -10624,7 +10642,7 @@
 /* 5 */
 /***/ (function(module, exports) {
 
-	module.exports = "\r\n    <nav class=\"navbar navbar-default\">\r\n        <div class=\"container\">\r\n            <ul class=\"nav navbar-nav\">\r\n                <li><a v-link=\"'home'\">Home</a></li>\r\n                <li><a v-link=\"'login'\">Login</a></li>\r\n                <li><a v-link=\"'signup'\">Sign Up</a></li>\r\n                <li><a v-link=\"'secretquote'\">Secret Quote</a></li>\r\n                <li><a v-link=\"'login'\">Logout</a></li>\r\n            </ul>\r\n        </div>\r\n    </nav>\r\n    <div class=\"container\">\r\n        <router-view></router-view>\r\n    </div>\r\n";
+	module.exports = "\r\n    <nav class=\"navbar navbar-default\">\r\n        <div class=\"container\">\r\n            <ul class=\"nav navbar-nav\">\r\n                <li><a v-link=\"'signup'\">Sign Up</a></li>\r\n            </ul>\r\n        </div>\r\n    </nav>\r\n    <div class=\"container\">\r\n        <router-view></router-view>\r\n    </div>\r\n";
 
 /***/ }),
 /* 6 */
@@ -10657,33 +10675,96 @@
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
-	// <template>
+	//
+	// <template xmlns:v-on="http://www.w3.org/1999/xhtml">
 	//     <div class="col-sm-6 col-sm-offset-3">
 	//         <h1>Welcome to DotMap</h1>
-	//         <button class="btn btn-primary col-xs-4 col-xs-offset-4" v-on:click="getQuote()">Log in</button>
+	//         <button class="btn btn-primary col-xs-4 col-xs-offset-4" v-on:click="show_modal()">Already a user?<br>Log in here</button>
 	//         <div class="quote-area" v-if="quote">
-	//             <h2><blockquote>{{ quote }}</blockquote></h2>
+	//             <h2>
+	//                 <blockquote>{{ quote }}</blockquote>
+	//             </h2>
+	//         </div>
+	//     </div>
+	//
+	//     <div class="modal" hidden id="login_modal">
+	//         <div class="modal-dialog">
+	//             <div class="modal-content">
+	//                 <div class="modal-header">
+	//                     <button type="button" class="close" data-dismiss="modal">&times;</button>
+	//                     <h4 class="modal-title">Dotmap login</h4>
+	//                 </div>
+	//                 <div class="modal-body">
+	//                     <h2>Log In</h2>
+	//                     <p>Log in to your account to get some great quotes.</p>
+	//                     <div class="alert alert-danger" v-if="error">
+	//                         <p>{{ error }}</p>
+	//                     </div>
+	//                     <div class="form-group">
+	//                         <input
+	//                                 type="text"
+	//                                 class="form-control"
+	//                                 placeholder="Enter your username"
+	//                                 v-model="credentials.username"
+	//                         >
+	//                     </div>
+	//                     <div class="form-group">
+	//                         <input
+	//                                 type="password"
+	//                                 class="form-control"
+	//                                 placeholder="Enter your password"
+	//                                 v-model="credentials.password"
+	//                         >
+	//                     </div>
+	//                     <button class="btn btn-primary" v-on:click="get_token()">Access</button>
+	//                 </div>
+	//
+	//             </div>
 	//         </div>
 	//     </div>
 	// </template>
 	//
 	// <script>
+
 	exports.default = {
 	    data: function data() {
 	        return {
-	            quote: ''
+	            quote: '',
+	            credentials: {
+	                username: '',
+	                password: ''
+	            },
+	            error: ''
 	        };
 	    },
 
 	    methods: {
-	        getQuote: function getQuote() {
-	            var _this = this;
-
-	            this.$http.get('http://localhost:3001/api/random-quote', function (data) {
-	                _this.quote = data;
-	            }).error(function (err) {
-	                return console.log(err);
+	        get_token: function get_token() {
+	            var base_code = "Basic " + btoa(this.credentials.username + ':' + this.credentials.password);
+	            console.log(base_code);
+	            $.ajax({
+	                async: true,
+	                crossDomain: true,
+	                type: "GET",
+	                method: "GET",
+	                url: "http://138.68.171.182/api/token/",
+	                dataType: 'json',
+	                headers: {
+	                    "authorization": base_code
+	                },
+	                success: function success(res) {
+	                    console.log(res.token);
+	                    var storage = window.localStorage;
+	                    storage.setItem('token', res.token);
+	                    window.location.assign("/index.html#!/mapview");
+	                },
+	                error: function error(xhr, textStatus, errorThrown) {
+	                    console.log("login error");
+	                }
 	            });
+	        },
+	        show_modal: function show_modal() {
+	            $("#login_modal").modal('show');
 	        }
 	    }
 	};
@@ -10693,7 +10774,7 @@
 /* 8 */
 /***/ (function(module, exports) {
 
-	module.exports = "\r\n    <div class=\"col-sm-6 col-sm-offset-3\">\r\n        <h1>Welcome to DotMap</h1>\r\n        <button class=\"btn btn-primary col-xs-4 col-xs-offset-4\" v-on:click=\"getQuote()\">Log in</button>\r\n        <div class=\"quote-area\" v-if=\"quote\">\r\n            <h2><blockquote>{{ quote }}</blockquote></h2>\r\n        </div>\r\n    </div>\r\n";
+	module.exports = "\r\n    <div class=\"col-sm-6 col-sm-offset-3\">\r\n        <h1>Welcome to DotMap</h1>\r\n        <button class=\"btn btn-primary col-xs-4 col-xs-offset-4\" v-on:click=\"show_modal()\">Already a user?<br>Log in here</button>\r\n        <div class=\"quote-area\" v-if=\"quote\">\r\n            <h2>\r\n                <blockquote>{{ quote }}</blockquote>\r\n            </h2>\r\n        </div>\r\n    </div>\r\n\r\n    <div class=\"modal\" hidden id=\"login_modal\">\r\n        <div class=\"modal-dialog\">\r\n            <div class=\"modal-content\">\r\n                <div class=\"modal-header\">\r\n                    <button type=\"button\" class=\"close\" data-dismiss=\"modal\">&times;</button>\r\n                    <h4 class=\"modal-title\">Dotmap login</h4>\r\n                </div>\r\n                <div class=\"modal-body\">\r\n                    <h2>Log In</h2>\r\n                    <p>Log in to your account to get some great quotes.</p>\r\n                    <div class=\"alert alert-danger\" v-if=\"error\">\r\n                        <p>{{ error }}</p>\r\n                    </div>\r\n                    <div class=\"form-group\">\r\n                        <input\r\n                                type=\"text\"\r\n                                class=\"form-control\"\r\n                                placeholder=\"Enter your username\"\r\n                                v-model=\"credentials.username\"\r\n                        >\r\n                    </div>\r\n                    <div class=\"form-group\">\r\n                        <input\r\n                                type=\"password\"\r\n                                class=\"form-control\"\r\n                                placeholder=\"Enter your password\"\r\n                                v-model=\"credentials.password\"\r\n                        >\r\n                    </div>\r\n                    <button class=\"btn btn-primary\" v-on:click=\"get_token()\">Access</button>\r\n                </div>\r\n\r\n            </div>\r\n        </div>\r\n    </div>\r\n";
 
 /***/ }),
 /* 9 */
@@ -10709,7 +10790,7 @@
 	  var hotAPI = require("vue-hot-reload-api")
 	  hotAPI.install(require("vue"), true)
 	  if (!hotAPI.compatible) return
-	  var id = "E:\\cordova\\dotmap\\www\\js\\components\\Login.vue"
+	  var id = "E:\\cordova\\dotmap\\www\\js\\components\\MapView.vue"
 	  if (!module.hot.data) {
 	    hotAPI.createRecord(id, module.exports)
 	  } else {
@@ -10719,6 +10800,80 @@
 
 /***/ }),
 /* 10 */
+/***/ (function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	// <template>
+	//     <div class="col-sm-4 col-sm-offset-4">
+	//         <h2>DotMap</h2>
+	//         <div class="alert alert-danger" v-if="error">
+	//             <p>{{ error }}</p>
+	//     </div>
+	//     </div>
+	//         <div class="col-xs-12" id="map_view">
+	//     </div>
+	// </template>
+	//
+	// <script>
+	var map;
+	exports.default = {
+	    data: function data() {
+	        return {
+	            // We need to initialize the component with any
+	            // properties that will be used in it
+	            credentials: {
+	                username: '',
+	                password: ''
+	            },
+	            error: ''
+	        };
+	    },
+
+	    methods: {},
+	    ready: function ready() {
+	        map = L.map('map_view').setView([51.505, -0.09], 13);
+	        L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+	            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+	            maxZoom: 19
+	        }).addTo(map);
+	    }
+	};
+	// </script>
+
+/***/ }),
+/* 11 */
+/***/ (function(module, exports) {
+
+	module.exports = "\r\n    <div class=\"col-sm-4 col-sm-offset-4\">\r\n        <h2>DotMap</h2>\r\n        <div class=\"alert alert-danger\" v-if=\"error\">\r\n            <p>{{ error }}</p>\r\n    </div>\r\n    </div>\r\n        <div class=\"col-xs-12\" id=\"map_view\">\r\n    </div>\r\n";
+
+/***/ }),
+/* 12 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var __vue_script__, __vue_template__
+	__vue_script__ = __webpack_require__(13)
+	__vue_template__ = __webpack_require__(14)
+	module.exports = __vue_script__ || {}
+	if (module.exports.__esModule) module.exports = module.exports.default
+	if (__vue_template__) { (typeof module.exports === "function" ? module.exports.options : module.exports).template = __vue_template__ }
+	if (false) {(function () {  module.hot.accept()
+	  var hotAPI = require("vue-hot-reload-api")
+	  hotAPI.install(require("vue"), true)
+	  if (!hotAPI.compatible) return
+	  var id = "E:\\cordova\\dotmap\\www\\js\\components\\Signup.vue"
+	  if (!module.hot.data) {
+	    hotAPI.createRecord(id, module.exports)
+	  } else {
+	    hotAPI.update(id, module.exports, __vue_template__)
+	  }
+	})()}
+
+/***/ }),
+/* 13 */
 /***/ (function(module, exports) {
 
 	'use strict';
@@ -10784,13 +10939,107 @@
 	// </script>
 
 /***/ }),
-/* 11 */
+/* 14 */
 /***/ (function(module, exports) {
 
 	module.exports = "\r\n    <div class=\"col-sm-4 col-sm-offset-4\">\r\n        <h2>Log In</h2>\r\n        <p>Log in to your account to get some great quotes.</p>\r\n        <div class=\"alert alert-danger\" v-if=\"error\">\r\n            <p>{{ error }}</p>\r\n        </div>\r\n        <div class=\"form-group\">\r\n            <input\r\n                    type=\"text\"\r\n                    class=\"form-control\"\r\n                    placeholder=\"Enter your username\"\r\n                    v-model=\"credentials.username\"\r\n            >\r\n        </div>\r\n        <div class=\"form-group\">\r\n            <input\r\n                    type=\"password\"\r\n                    class=\"form-control\"\r\n                    placeholder=\"Enter your password\"\r\n                    v-model=\"credentials.password\"\r\n            >\r\n        </div>\r\n        <button class=\"btn btn-primary\" @click=\"submit()\">Access</button>\r\n    </div>\r\n";
 
 /***/ }),
-/* 12 */
+/* 15 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var __vue_script__, __vue_template__
+	__vue_script__ = __webpack_require__(16)
+	__vue_template__ = __webpack_require__(17)
+	module.exports = __vue_script__ || {}
+	if (module.exports.__esModule) module.exports = module.exports.default
+	if (__vue_template__) { (typeof module.exports === "function" ? module.exports.options : module.exports).template = __vue_template__ }
+	if (false) {(function () {  module.hot.accept()
+	  var hotAPI = require("vue-hot-reload-api")
+	  hotAPI.install(require("vue"), true)
+	  if (!hotAPI.compatible) return
+	  var id = "E:\\cordova\\dotmap\\www\\js\\components\\Login.vue"
+	  if (!module.hot.data) {
+	    hotAPI.createRecord(id, module.exports)
+	  } else {
+	    hotAPI.update(id, module.exports, __vue_template__)
+	  }
+	})()}
+
+/***/ }),
+/* 16 */
+/***/ (function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	// <template>
+	//     <div class="col-sm-4 col-sm-offset-4">
+	//         <h2>Log In</h2>
+	//         <p>Log in to your account to get some great quotes.</p>
+	//         <div class="alert alert-danger" v-if="error">
+	//             <p>{{ error }}</p>
+	//         </div>
+	//         <div class="form-group">
+	//             <input
+	//                     type="text"
+	//                     class="form-control"
+	//                     placeholder="Enter your username"
+	//                     v-model="credentials.username"
+	//             >
+	//         </div>
+	//         <div class="form-group">
+	//             <input
+	//                     type="password"
+	//                     class="form-control"
+	//                     placeholder="Enter your password"
+	//                     v-model="credentials.password"
+	//             >
+	//         </div>
+	//         <button class="btn btn-primary" @click="submit()">Access</button>
+	//     </div>
+	// </template>
+	//
+	// <script>
+	//    import auth from '../auth'
+	exports.default = {
+	    data: function data() {
+	        return {
+	            // We need to initialize the component with any
+	            // properties that will be used in it
+	            credentials: {
+	                username: '',
+	                password: ''
+	            },
+	            error: ''
+	        };
+	    },
+
+	    methods: {
+	        submit: function submit() {
+	            var credentials = {
+	                username: this.credentials.username,
+	                password: this.credentials.password
+	            };
+	            // We need to pass the component's this context
+	            // to properly make use of http in the auth service
+	            auth.login(this, credentials, 'secretquote');
+	        }
+	    }
+
+	};
+	// </script>
+
+/***/ }),
+/* 17 */
+/***/ (function(module, exports) {
+
+	module.exports = "\r\n    <div class=\"col-sm-4 col-sm-offset-4\">\r\n        <h2>Log In</h2>\r\n        <p>Log in to your account to get some great quotes.</p>\r\n        <div class=\"alert alert-danger\" v-if=\"error\">\r\n            <p>{{ error }}</p>\r\n        </div>\r\n        <div class=\"form-group\">\r\n            <input\r\n                    type=\"text\"\r\n                    class=\"form-control\"\r\n                    placeholder=\"Enter your username\"\r\n                    v-model=\"credentials.username\"\r\n            >\r\n        </div>\r\n        <div class=\"form-group\">\r\n            <input\r\n                    type=\"password\"\r\n                    class=\"form-control\"\r\n                    placeholder=\"Enter your password\"\r\n                    v-model=\"credentials.password\"\r\n            >\r\n        </div>\r\n        <button class=\"btn btn-primary\" @click=\"submit()\">Access</button>\r\n    </div>\r\n";
+
+/***/ }),
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/*!
@@ -13504,7 +13753,7 @@
 	}));
 
 /***/ }),
-/* 13 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/**
@@ -13513,11 +13762,11 @@
 
 	function install(Vue) {
 
-	    var _ = __webpack_require__(14)(Vue);
+	    var _ = __webpack_require__(20)(Vue);
 
-	    Vue.url = __webpack_require__(15)(_);
-	    Vue.http = __webpack_require__(16)(_);
-	    Vue.resource = __webpack_require__(20)(_);
+	    Vue.url = __webpack_require__(21)(_);
+	    Vue.http = __webpack_require__(22)(_);
+	    Vue.resource = __webpack_require__(26)(_);
 
 	    Object.defineProperties(Vue.prototype, {
 
@@ -13549,7 +13798,7 @@
 	module.exports = install;
 
 /***/ }),
-/* 14 */
+/* 20 */
 /***/ (function(module, exports) {
 
 	/**
@@ -13635,7 +13884,7 @@
 
 
 /***/ }),
-/* 15 */
+/* 21 */
 /***/ (function(module, exports) {
 
 	/**
@@ -13798,16 +14047,16 @@
 
 
 /***/ }),
-/* 16 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/**
 	 * Service for sending network requests.
 	 */
 
-	var xhr = __webpack_require__(17);
-	var jsonp = __webpack_require__(19);
-	var Promise = __webpack_require__(18);
+	var xhr = __webpack_require__(23);
+	var jsonp = __webpack_require__(25);
+	var Promise = __webpack_require__(24);
 
 	module.exports = function (_) {
 
@@ -13964,14 +14213,14 @@
 
 
 /***/ }),
-/* 17 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/**
 	 * XMLHttp request.
 	 */
 
-	var Promise = __webpack_require__(18);
+	var Promise = __webpack_require__(24);
 	var XDomain = window.XDomainRequest;
 
 	module.exports = function (_, options) {
@@ -14021,7 +14270,7 @@
 
 
 /***/ }),
-/* 18 */
+/* 24 */
 /***/ (function(module, exports) {
 
 	/**
@@ -14237,14 +14486,14 @@
 
 
 /***/ }),
-/* 19 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/**
 	 * JSONP request.
 	 */
 
-	var Promise = __webpack_require__(18);
+	var Promise = __webpack_require__(24);
 
 	module.exports = function (_, options) {
 
@@ -14293,7 +14542,7 @@
 
 
 /***/ }),
-/* 20 */
+/* 26 */
 /***/ (function(module, exports) {
 
 	/**

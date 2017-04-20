@@ -62,3 +62,4 @@ typings/
 /platforms
 .idea/workspace.xml
 plugins/
+/www/js/build
