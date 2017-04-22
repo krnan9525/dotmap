@@ -97,8 +97,9 @@ router.start(App, '#app');
 
 var storage = window.localStorage;
 var token = storage.getItem('token');
-if(token != '')
+// console.log("Using token now: "+ token);
+if(token.localeCompare('')!=0)
 {
-    window.location.assign("/index.html#!/mapview");
+    router.replace("mapview");
     console.log("Using token now: "+ token);
 }

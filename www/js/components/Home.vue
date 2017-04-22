@@ -49,7 +49,10 @@
 
 <script>
 
+    import {router} from '../index'
     export default {
+        name: 'home',
+        router,
         data() {
             return {
                 quote: '',
@@ -78,7 +81,8 @@
                         console.log(res.token);
                         var storage = window.localStorage;
                         storage.setItem('token', res.token);
-                        window.location.assign("/index.html#!/mapview")
+                        $("#login_modal").modal('hide');
+                        router.replace('mapview');
                     },
                     error: function(xhr, textStatus, errorThrown){
                         console.log("login error");
