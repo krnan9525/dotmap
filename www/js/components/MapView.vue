@@ -6,7 +6,8 @@
         </div>
     </div>
     <div class="col-xs-12" id="map_view"></div>
-    <button class="col-xs-6 col-xs-offset-3 btn btn-success" v-on:click="map_reveal">Start sharing my location</button>
+    <button id="share_btn" class="col-xs-6 col-xs-offset-3 btn btn-success" v-on:click="map_reveal">Start sharing my location</button>
+    <button id="stop_share_btn" class="col-xs-6 col-xs-offset-3 btn btn-danger" v-on:click="map_unreveal" style="display: none;">Stop sharing my location</button>
     <button class="col-xs-6 col-xs-offset-3 btn btn-success" v-on:click="get_interest_points">Show interest locations
     </button>
 </template>
@@ -14,7 +15,11 @@
 <script>
 
 
-    var map;
+    let map;
+    let storage = window.localStorage;
+    let token = storage.getItem('token');
+    let pre_geojson;
+    let geo_watcher_id = 0;
     export default {
         name: 'MapView',
         data() {
@@ -37,10 +42,28 @@
                 //   the current GPS coordinates
                 //
                 function onSuccess(position) {
-                    var element = document.getElementById('geolocation');
-                    element.innerHTML = 'Latitude: '  + position.coords.latitude      + '<br />' +
+                    console.log('Latitude: '  + position.coords.latitude      + '<br />' +
                         'Longitude: ' + position.coords.longitude     + '<br />' +
-                        '<hr />'      + element.innerHTML;
+                        '<hr />');
+                    $.getJSON({
+                        async: true,
+                        crossDomain: true,
+                        type: "POST",
+                        url: "http://138.68.171.182/api/submit_location/",
+                        dataType: 'json',
+                        headers: {
+                            "authorization": "Token " + token
+                        },
+                        data: {
+                            'location_1': position.coords.longitude,
+                            'location_2': position.coords.latitude
+                        },
+                        success: function (res) {
+                            console.log("submit successfully");
+                            update_map();
+                            map.setView([position.coords.latitude,position.coords.longitude]);
+                        }
+                    });
                 }
 
                 // onError Callback receives a PositionError object
@@ -52,82 +75,30 @@
 
                 // Options: throw an error if no update is received every 30 seconds.
                 //
-                var watchID = navigator.geolocation.watchPosition(onSuccess, onError, { timeout: 30000 });
+                geo_watcher_id = navigator.geolocation.watchPosition(onSuccess, onError, { timeout: 30000 });
+                $("#share_btn").addClass('hidden');
+                $("#stop_share_btn").removeClass('hidden').show();
             },
 
             get_interest_points() {
                 get_int_ppoints();
+            },
+
+            map_unreveal() {
+                navigator.geolocation.clearWatch(geo_watcher_id);
+                $("#share_btn").removeClass('hidden');
+                $("#stop_share_btn").addClass('hidden');
             }
         },
         ready: function () {
             map = L.map('map_view').setView([13.19048, 1.64441], 13);
-
-            var storage = window.localStorage;
-            var token = storage.getItem('token');
-            $.getJSON({
-                async: true,
-                crossDomain: true,
-                type: "POST",
-                url: "http://138.68.171.182/api/fetch_location/",
-                dataType: 'json',
-                headers: {
-                    "authorization": "Token " + token
-                },
-                data: {
-                    "user_id": 1
-                },
-                success: function (res) {
-//                    let lngandlat = res.buffer.coordinates;
-//                    for (var i = 0 ; i < lngandlat.length; i++)
-//                    {
-//                        let latlng = [];
-//                        for( var j = 0 ; j < lngandlat[i][0].length; j++)
-//                        {
-//                            latlng.push(new L.LatLng(lngandlat[i][0][j][0],lngandlat[i][0][j][1]) );
-//                        }
-//                        let polygon = new L.Polygon(latlng);
-                    let osmAttribution = 'Map data &copy; 2012 OpenStreetMap contributors';
-
-                    var myStyle = {
-                        "color": "#ff7800",
-                        'fillColor': "#000000",
-                        'fillOpacity': 0.95,
-                        "weight": 5,
-                        "opacity": 0.65
-                    };
-
-                    this.json_return = res;
-                    console.log(res);
-                    var worldLatlngs = [[
-                        [90, 180],
-                        [90, -180],
-                        [-90, -180],
-                        [-90, 180]]
-                    ];
-                    res.features[0].geometry.coordinates.push(worldLatlngs);
-                    let geojson = L.geoJson(res, {
-                        invert: true,
-                        style: myStyle
-                    }).addTo(map);
-
-//                    map.fitBounds(geojson.getBounds());
-                    var osm = L.tileLayer("http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-                        attribution: osmAttribution,
-                        maxZoom: 19
-                    }).addTo(map);
-
-                    get_int_ppoints();
-                },
-                error: function (xhr, textStatus, errorThrown) {
-                    console.log("Map reveal error!");
-                }
-            });
+            update_map();
+            get_int_ppoints();
         }
     }
 
     function get_int_ppoints() {
-        var storage = window.localStorage;
-        var token = storage.getItem('token');
+
         $.ajax({
             async: true,
             crossDomain: true,
@@ -153,11 +124,7 @@
                         zIndexOffset: 1000
                     });
                     marker.bindPopup("<b>" + res.features[i].properties.name + " (with " + res.features[i].properties.check_in_num + " times check in)</b><br>"
-                        + res.features[i].properties.information).addTo(map).openPopup();
-                    var popup = L.popup()
-                        .setLatLng([res.features[i].geometry.coordinates[1], res.features[i].geometry.coordinates[0]])
-                        .setContent("I am a standalone popup.")
-                        .openOn(map);
+                        + res.features[i].properties.information).addTo(map);
                 }
                 let geojson = L.geoJson(res, {
                     invert: true,
@@ -168,5 +135,61 @@
                 map.fitBounds(geojson.getBounds());
             }
         });
+    }
+
+    function update_map() {
+
+        $.getJSON({
+            async: true,
+            crossDomain: true,
+            type: "POST",
+            url: "http://138.68.171.182/api/fetch_location/",
+            dataType: 'json',
+            headers: {
+                "authorization": "Token " + token
+            },
+            data: {
+                "user_id": 1
+            },
+            success: function (res) {
+                let osmAttribution = 'Map data &copy; 2012 OpenStreetMap contributors';
+
+                if(pre_geojson!=null)
+                    map.removeLayer(pre_geojson);
+
+                var myStyle = {
+                    "color": "#ff7800",
+                    'fillColor': "#000000",
+                    'fillOpacity': 0.95,
+                    "weight": 5,
+                    "opacity": 0.65
+                };
+
+                this.json_return = res;
+                console.log(res);
+                var worldLatlngs = [[
+                    [ 180,90],
+                    [-180,90],
+                    [-180,-90],
+                    [180,-90]]
+                ];
+                res.features[0].geometry.coordinates.push(worldLatlngs);
+                pre_geojson = L.geoJson(res, {
+                    invert: true,
+                    style: myStyle
+                }).addTo(map);
+
+//                    map.fitBounds(geojson.getBounds());
+                var osm = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                    attribution: osmAttribution,
+                    maxZoom: 19
+                }).addTo(map);
+
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                console.log("Map reveal error!");
+            }
+        });
+
     }
 </script>
