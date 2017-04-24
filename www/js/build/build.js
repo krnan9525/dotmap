@@ -10643,7 +10643,7 @@
 /* 5 */
 /***/ (function(module, exports) {
 
-	module.exports = "\r\n    <nav class=\"navbar navbar-default\">\r\n        <div class=\"container-fluid\">\r\n            <ul class=\"nav navbar-nav\">\r\n                <li><a v-link=\"'signup'\">Sign Up</a></li>\r\n            </ul>\r\n        </div>\r\n    </nav>\r\n    <div class=\"container-fluid\">\r\n        <router-view></router-view>\r\n    </div>\r\n";
+	module.exports = "\r\n    <nav class=\"navbar navbar-default\">\r\n        <div class=\"container-fluid\">\r\n            <ul class=\"nav navbar-nav\">\r\n                <li><a v-link=\"'signup'\">Sign Up</a></li>\r\n            </ul>\r\n        </div>\r\n    </nav>\r\n    <div class=\"container-fluid\" id=\"main_container\">\r\n        <router-view></router-view>\r\n    </div>\r\n";
 
 /***/ }),
 /* 6 */
@@ -10808,23 +10808,34 @@
 /* 10 */
 /***/ (function(module, exports) {
 
-	'use strict';
+	"use strict";
 
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
 	// <template xmlns:v-on="http://www.w3.org/1999/xhtml">
 	//     <div class="col-sm-4 col-sm-offset-4">
-	//         <h2>DotMap</h2>
 	//         <div class="alert alert-danger" v-if="error">
 	//             <p>{{ error }}</p>
 	//         </div>
 	//     </div>
 	//     <div class="col-xs-12" id="map_view"></div>
-	//     <button id="share_btn" class="col-xs-6 col-xs-offset-3 btn btn-success" v-on:click="map_reveal">Start sharing my location</button>
-	//     <button id="stop_share_btn" class="col-xs-6 col-xs-offset-3 btn btn-danger" v-on:click="map_unreveal" style="display: none;">Stop sharing my location</button>
-	//     <button class="col-xs-6 col-xs-offset-3 btn btn-success" v-on:click="get_interest_points">Show interest locations
+	//     <button id="share_btn" class="col-xs-6 col-xs-offset-3 btn btn-success" v-on:click="map_reveal">Start sharing my
+	//         location
 	//     </button>
+	//     <button id="stop_share_btn" class="col-xs-6 col-xs-offset-3 btn btn-danger" v-on:click="map_unreveal"
+	//             style="display: none;">Stop sharing my location
+	//     </button>
+	//     <button id="show_locations" class="col-xs-6 col-xs-offset-3 btn btn-success" v-on:click="get_interest_points">Show
+	//         interest locations
+	//     </button>
+	//     <div class="onoffswitch">
+	//         <input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="myonoffswitch" v-model="map_follow">
+	//         <label class="onoffswitch-label" for="myonoffswitch">
+	//             <span class="onoffswitch-inner"></span>
+	//             <span class="onoffswitch-switch"></span>
+	//         </label>
+	//     </div>
 	// </template>
 	//
 	// <script>
@@ -10834,19 +10845,22 @@
 	var storage = window.localStorage;
 	var token = storage.getItem('token');
 	var pre_geojson = void 0;
+	var current_location = {
+	    "lng": -6.260431,
+	    "lat": 53.350358
+	};
 	var geo_watcher_id = 0;
 	exports.default = {
 	    name: 'MapView',
 	    data: function data() {
 	        return {
-	            // We need to initialize the component with any
-	            // properties that will be used in it
 	            credentials: {
 	                username: '',
 	                password: ''
 	            },
 	            error: '',
-	            json_return: ''
+	            json_return: '',
+	            map_follow: true
 	        };
 	    },
 
@@ -10875,7 +10889,14 @@
 	                    success: function success(res) {
 	                        console.log("submit successfully");
 	                        update_map();
+	                        //optional
+	                        //                            if (this.map_follow == true)
 	                        map.setView([position.coords.latitude, position.coords.longitude]);
+
+	                        current_location = {
+	                            "lng": position.coords.longitude,
+	                            "lat": position.coords.latitude
+	                        };
 	                    }
 	                });
 	            }
@@ -10921,10 +10942,7 @@
 	        headers: {
 	            "authorization": "Token " + token
 	        },
-	        data: {
-	            "lng": -6.260431,
-	            "lat": 53.350358
-	        },
+	        data: current_location,
 	        success: function success(res) {
 	            var myIcon = L.icon({
 	                iconUrl: 'img/dot.png',
@@ -10969,11 +10987,11 @@
 	            if (pre_geojson != null) map.removeLayer(pre_geojson);
 
 	            var myStyle = {
-	                "color": "#ff7800",
+	                "color": "#ffffff",
 	                'fillColor': "#000000",
 	                'fillOpacity': 0.95,
-	                "weight": 5,
-	                "opacity": 0.65
+	                "weight": 50,
+	                "opacity": 0.05
 	            };
 
 	            this.json_return = res;
@@ -11002,7 +11020,7 @@
 /* 11 */
 /***/ (function(module, exports) {
 
-	module.exports = "\r\n    <div class=\"col-sm-4 col-sm-offset-4\">\r\n        <h2>DotMap</h2>\r\n        <div class=\"alert alert-danger\" v-if=\"error\">\r\n            <p>{{ error }}</p>\r\n        </div>\r\n    </div>\r\n    <div class=\"col-xs-12\" id=\"map_view\"></div>\r\n    <button id=\"share_btn\" class=\"col-xs-6 col-xs-offset-3 btn btn-success\" v-on:click=\"map_reveal\">Start sharing my location</button>\r\n    <button id=\"stop_share_btn\" class=\"col-xs-6 col-xs-offset-3 btn btn-danger\" v-on:click=\"map_unreveal\" style=\"display: none;\">Stop sharing my location</button>\r\n    <button class=\"col-xs-6 col-xs-offset-3 btn btn-success\" v-on:click=\"get_interest_points\">Show interest locations\r\n    </button>\r\n";
+	module.exports = "\r\n    <div class=\"col-sm-4 col-sm-offset-4\">\r\n        <div class=\"alert alert-danger\" v-if=\"error\">\r\n            <p>{{ error }}</p>\r\n        </div>\r\n    </div>\r\n    <div class=\"col-xs-12\" id=\"map_view\"></div>\r\n    <button id=\"share_btn\" class=\"col-xs-6 col-xs-offset-3 btn btn-success\" v-on:click=\"map_reveal\">Start sharing my\r\n        location\r\n    </button>\r\n    <button id=\"stop_share_btn\" class=\"col-xs-6 col-xs-offset-3 btn btn-danger\" v-on:click=\"map_unreveal\"\r\n            style=\"display: none;\">Stop sharing my location\r\n    </button>\r\n    <button id=\"show_locations\" class=\"col-xs-6 col-xs-offset-3 btn btn-success\" v-on:click=\"get_interest_points\">Show\r\n        interest locations\r\n    </button>\r\n    <div class=\"onoffswitch\">\r\n        <input type=\"checkbox\" name=\"onoffswitch\" class=\"onoffswitch-checkbox\" id=\"myonoffswitch\" v-model=\"map_follow\">\r\n        <label class=\"onoffswitch-label\" for=\"myonoffswitch\">\r\n            <span class=\"onoffswitch-inner\"></span>\r\n            <span class=\"onoffswitch-switch\"></span>\r\n        </label>\r\n    </div>\r\n";
 
 /***/ }),
 /* 12 */
