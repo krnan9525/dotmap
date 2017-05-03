@@ -48,9 +48,18 @@
                 map_follow: true
             }
         },
+
+        watch:{
+
+          map_follow:function(){
+              console.log('map follow clicked')
+              console.log(Map) ;
+          }
+
+        },
         methods: {
             map_reveal: function () {
-
+                    var vm = this ;
                 // onSuccess Callback
                 //   This method accepts a `Position` object, which contains
                 //   the current GPS coordinates
@@ -76,8 +85,10 @@
                             console.log("submit successfully");
                             update_map();
                             //optional
-//                            if (this.map_follow == true)
+                            if (vm.map_follow == true){
                                 map.setView([position.coords.latitude, position.coords.longitude]);
+                            }
+
 
                             current_location = {
                                 "lng": position.coords.longitude,
@@ -179,7 +190,7 @@
                     "color": "#ffffff",
                     'fillColor': "#000000",
                     'fillOpacity': 0.95,
-                    "weight": 50,
+                    "weight": 40,
                     "opacity": 0.05
                 };
 

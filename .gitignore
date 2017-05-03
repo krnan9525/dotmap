@@ -63,3 +63,8 @@ typings/
 .idea/workspace.xml
 plugins/
 /www/js/build
+Leaflet.snogylop-master/
+leaflet-maskcanvas-master/
+www/js/dependicies/esri-leaflet.8
+www/js/dependicies/leaflet-src.js
+www/js/dependicies/leaflet-src.map
